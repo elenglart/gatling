@@ -29,11 +29,13 @@ import io.gatling.commons.model.Credentials
  */
 case object JmsProtocolBuilderBase {
 
-  def connectionFactory(cf: ConnectionFactory): JmsProtocolBuilder = JmsProtocolBuilder(cf, None, DeliveryMode.NON_PERSISTENT, MessageIdMessageMatcher, 1, None)
+  def connectionFactory(cf: ConnectionFactory): JmsProtocolBuilder =
+    JmsProtocolBuilder(cf, "", None, DeliveryMode.NON_PERSISTENT, MessageIdMessageMatcher, 1, None)
 }
 
 final case class JmsProtocolBuilder(
     connectionFactory: ConnectionFactory,
+    url: String,
     creds: Option[Credentials],
     deliveryMode: Int,
     messageMatcher: JmsMessageMatcher,
@@ -42,6 +44,7 @@ final case class JmsProtocolBuilder(
 ) {
 
   def credentials(user: String, password: String): JmsProtocolBuilder = copy(creds = Some(Credentials(user, password)))
+  def url(url: String): JmsProtocolBuilder = copy(url = url)
   def usePersistentDeliveryMode: JmsProtocolBuilder = copy(deliveryMode = DeliveryMode.PERSISTENT)
   def useNonPersistentDeliveryMode: JmsProtocolBuilder = copy(deliveryMode = DeliveryMode.NON_PERSISTENT)
   def matchByMessageId: JmsProtocolBuilder = messageMatcher(MessageIdMessageMatcher)
@@ -52,6 +55,7 @@ final case class JmsProtocolBuilder(
 
   def build: JmsProtocol = JmsProtocol(
     credentials = creds,
+    url = url,
     deliveryMode = deliveryMode,
     messageMatcher = messageMatcher,
     replyTimeout = replyTimeout,

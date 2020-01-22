@@ -45,6 +45,7 @@ object JmsProtocol {
 
 final case class JmsProtocol(
     connectionFactory: ConnectionFactory,
+    url: String,
     credentials: Option[Credentials],
     deliveryMode: Int,
     replyTimeout: Option[Long],

@@ -48,7 +48,7 @@ abstract class JmsAction(
 
   override val requestName: Expression[String] = attributes.requestName
 
-  protected val jmsConnection: JmsConnection = pool.jmsConnection(protocol.connectionFactory, protocol.credentials)
+  protected val jmsConnection: JmsConnection = pool.jmsConnection(protocol.connectionFactory, protocol.credentials, protocol.url)
   private val jmsDestination = jmsConnection.destination(attributes.destination)
 
   override def sendRequest(requestName: String, session: Session): Validation[Unit] =

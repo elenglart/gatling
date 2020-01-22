@@ -32,7 +32,7 @@ class JmsConnectionPool(system: ActorSystem, statsEngine: StatsEngine, clock: Cl
 
   private val connections = new ConcurrentHashMap[ConnectionFactory, JmsConnection]
 
-  def jmsConnection(connectionFactory: ConnectionFactory, credentials: Option[Credentials]): JmsConnection = {
+  def jmsConnection(connectionFactory: ConnectionFactory, credentials: Option[Credentials], url: String): JmsConnection = {
     val connection = connections.computeIfAbsent(
       connectionFactory,
       (connectionFactory: ConnectionFactory) => {
@@ -41,7 +41,7 @@ class JmsConnectionPool(system: ActorSystem, statsEngine: StatsEngine, clock: Cl
           case _                                     => connectionFactory.createConnection()
         }
         connection.start()
-        new JmsConnection(connection, credentials, system, statsEngine, clock, configuration)
+        new JmsConnection(connection, url, credentials, system, statsEngine, clock, configuration)
       }
     )
 

@@ -16,6 +16,7 @@
 
 package io.gatling.jms.client
 
+import java.util
 import java.util.concurrent.ConcurrentHashMap
 
 import javax.jms.{ Connection, Destination }
@@ -26,11 +27,12 @@ import io.gatling.core.session._
 import io.gatling.core.stats.StatsEngine
 import io.gatling.jms.protocol.JmsMessageMatcher
 import io.gatling.jms.request._
-
 import akka.actor.ActorSystem
+import javax.naming.{ Context, InitialContext }
 
 class JmsConnection(
     connection: Connection,
+    url: String,
     val credentials: Option[Credentials],
     system: ActorSystem,
     statsEngine: StatsEngine,
@@ -48,10 +50,25 @@ class JmsConnection(
     jmsDestination match {
       case JmsTemporaryQueue => jmsSession.createTemporaryQueue().expressionSuccess
       case JmsTemporaryTopic => jmsSession.createTemporaryTopic().expressionSuccess
-      case JmsQueue(name)    => name.map(n => staticQueues.computeIfAbsent(n, jmsSession.createQueue _))
+      case JmsQueue(name)    => name.map(n => staticQueues.computeIfAbsent(n, lookupForDestination _))
       case JmsTopic(name)    => name.map(n => staticTopics.computeIfAbsent(n, jmsSession.createTopic _))
     }
   }
+
+  lazy val initialContext: InitialContext = {
+    val compatProps = new util.Hashtable[String, String]()
+    compatProps.put(Context.INITIAL_CONTEXT_FACTORY, "weblogic.jndi.WLInitialContextFactory")
+    compatProps.put(Context.PROVIDER_URL, url)
+
+    if (credentials.isDefined) {
+      compatProps.put(Context.SECURITY_PRINCIPAL, credentials.get.username)
+      compatProps.put(Context.SECURITY_CREDENTIALS, credentials.get.password)
+    }
+
+    new InitialContext(compatProps)
+  }
+
+  def lookupForDestination(destName: String): Destination = initialContext.lookup(destName).asInstanceOf[Destination]
 
   private val producerPool = new JmsProducerPool(sessionPool)
 
